@@ -25,6 +25,7 @@ ext {
 }
 
 dependencies {
+	implementation platform("org.springframework.ai:spring-ai-bom:1.0.0-SNAPSHOT")
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.springframework.ai:spring-ai-milvus-store-spring-boot-starter'
 	implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
