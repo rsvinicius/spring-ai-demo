@@ -8,23 +8,26 @@ import org.springframework.ai.ollama.OllamaChatModel
 import org.springframework.ai.ollama.api.OllamaOptions
 import org.springframework.ai.vectorstore.SearchRequest
 import org.springframework.ai.vectorstore.SimpleVectorStore
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
 import java.util.stream.Collectors
 
 @RestController
+@RequestMapping("/api")
 class ChatController(
     // Using spring boot autoconfiguration, see official spring AI documentation for further customization (temperature, model, etc...)
     private val chatModel: OllamaChatModel,
     private val vectorStore: SimpleVectorStore
 ) {
     // Chat
-    @GetMapping("/ai/generate")
+    @PostMapping("/chats")
     fun generate(
-        @RequestParam(
-            value = "message",
-            defaultValue = "How can you help me?"
-        ) message: String?
+        @RequestBody message: String
     ): String? {
 
         val prompt = Prompt(UserMessage(message))
@@ -33,12 +36,9 @@ class ChatController(
     }
 
     // Chat with function calling
-    @GetMapping("/ai/generateFunction")
+    @PostMapping("/chats/functions")
     fun generateWithFunction(
-        @RequestParam(
-            value = "message",
-            defaultValue = "What's the weather like in Tokyo?"
-        ) message: String?
+        @RequestBody message: String
     ): String? {
 
         val prompt = Prompt(UserMessage(message), OllamaOptions.builder().withFunction("CurrentWeather").build())
@@ -47,19 +47,16 @@ class ChatController(
     }
 
     // Streaming chat (function calling not supported at moment with streaming for ollama api)
-    @GetMapping("/ai/generateStream")
+    @PostMapping("/chats/stream")
     fun generateStream(
-        @RequestParam(
-            value = "message",
-            defaultValue = "Tell me a joke"
-        ) message: String?
+        @RequestBody message: String
     ): Flux<ChatResponse> {
         val prompt = Prompt(UserMessage(message))
         return chatModel.stream(prompt)
     }
 
     // Add embedding info
-    @PostMapping("/ai/embeddings/add")
+    @PostMapping("/embeddings")
     fun embed(@RequestBody docs: List<String>) {
         val documents = docs.map { Document(it) }
 
@@ -67,11 +64,11 @@ class ChatController(
     }
 
     // Similarity search
-    @GetMapping("/ai/embeddings/search")
-    fun search(@RequestParam(value = "query") query: String): String? {
+    @GetMapping("/embeddings/search")
+    fun search(@RequestParam(value = "text") text: String): String? {
         val similarDocuments = vectorStore.similaritySearch(
             SearchRequest.defaults()
-                .withQuery(query)
+                .withQuery(text)
                 .withSimilarityThreshold(0.5)
         )
 
